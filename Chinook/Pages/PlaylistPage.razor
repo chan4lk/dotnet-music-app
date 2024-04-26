@@ -1,25 +1,13 @@
 ﻿@page "/playlist/{PlaylistId:long}"
 @attribute [Authorize]
+@inherits ReactiveComponentBase
+@using Chinook.Core
 
-@using Chinook.Models
-@using Microsoft.EntityFrameworkCore
-@using System.Security.Claims;
+<h1>Playlist <strong>@(playlist != null ? playlist.Name: string.Empty)</strong></h1>
 
-<h1>Playlist <strong>@Playlist.Name</strong></h1>
+<InfoMessage Message="@InfoMessage" IsError="@IsError"></InfoMessage>
 
-@if (!string.IsNullOrWhiteSpace(InfoMessage))
-{
-    <div class="alert alert-info fade show">
-        <div class="d-flex align-items-start">
-            <div class="flex-grow-1">
-                @InfoMessage
-            </div>
-            <button type="button" class="btn-close" aria-label="Close" @onclick="CloseInfoMessage"></button>
-        </div>
-    </div>
-}
-
-@if (Playlist == null)
+@if (playlist == null)
 {
      <Loading />
 }
@@ -33,13 +21,13 @@ else
         </tr>
         </thead>
         <tbody>
-            @foreach (var track in Playlist.Tracks)
+            @foreach (var track in playlist.Tracks)
             {
                 <tr>
                     <td>@track.ArtistName - @track.AlbumTitle - @track.TrackName</td>
                     <td>
                         <div class="d-flex">
-                            @if (Playlist.Name != "Favorite")
+                            @if (playlist.Name != Constants.FAVORITES)
                             {
                                 @if (track.IsFavorite)
                                 {
@@ -58,77 +46,4 @@ else
             }
         </tbody>
     </table>
-}
-
-@code {
-    [Parameter] public long PlaylistId { get; set; }
-    [Inject] IDbContextFactory<ChinookContext> DbFactory { get; set; }
-    [CascadingParameter] private Task<AuthenticationState> authenticationState { get; set; }
-
-    private Chinook.ClientModels.Playlist Playlist;
-    private string CurrentUserId;
-    private string InfoMessage;
-
-    protected override async Task OnInitializedAsync()
-    {
-        CurrentUserId = await GetUserId();
-
-        await InvokeAsync(StateHasChanged);
-        var DbContext = await DbFactory.CreateDbContextAsync();
-
-        Playlist = DbContext.Playlists
-            .Include(a => a.Tracks).ThenInclude(a => a.Album).ThenInclude(a => a.Artist)
-            .Where(p => p.PlaylistId == PlaylistId)
-            .Select(p => new ClientModels.Playlist()
-                {
-                    Name = p.Name,
-                    Tracks = p.Tracks.Select(t => new ClientModels.PlaylistTrack()
-                    {
-                        AlbumTitle = t.Album.Title,
-                        ArtistName = t.Album.Artist.Name,
-                        TrackId = t.TrackId,
-                        TrackName = t.Name,
-                        IsFavorite = t.Playlists.Where(p => p.UserPlaylists.Any(up => up.UserId == CurrentUserId && up.Playlist.Name == "Favorites")).Any()
-                    }).ToList()
-                })
-            .FirstOrDefault();
-    }
-
-    private async Task<string> GetUserId()
-    {
-        var user = (await authenticationState).User;
-        var userId = user.FindFirst(u => u.Type.Contains(ClaimTypes.NameIdentifier))?.Value;
-        return userId;
-    }
-
-    private void FavoriteTrack(long trackId)
-    {
-        var track = Playlist.Tracks.FirstOrDefault(t => t.TrackId == trackId);
-
-        // TODO: add track to Favorites playlist
-
-        InfoMessage = $"Track {track.ArtistName} - {track.AlbumTitle} - {track.TrackName} added to playlist Favorites.";
-    }
-
-    private void UnfavoriteTrack(long trackId)
-    {
-        var track = Playlist.Tracks.FirstOrDefault(t => t.TrackId == trackId);
-
-        // TODO: remove track from Favorites playlist
-
-        InfoMessage = $"Track {track.ArtistName} - {track.AlbumTitle} - {track.TrackName} removed from playlist Favorites.";
-    }
-
-    private void RemoveTrack(long trackId)
-    {
-        // TODO
-        s
-        CloseInfoMessage();
-    }
-
-    private void CloseInfoMessage()
-    {
-        InfoMessage = "";
-    }
-
 }
