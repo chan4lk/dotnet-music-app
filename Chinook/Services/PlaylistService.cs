@@ -71,7 +71,7 @@ public class PlaylistService : IPlaylistService
             .ThenInclude(a => a.Artist)
             .Where(p => p.UserPlaylists.Any(up => up.UserId == currentUserId))
             .Select(p => p)
-            .OrderBy(p => p.Name != Constants.FAVORITES)
+            .OrderBy(p => p.Name != Constants.FAVORITES) // Make sure favorites playlist is on top
             .ThenBy(p => p.PlaylistId)
             .ToListAsync(cancellationToken);
 
