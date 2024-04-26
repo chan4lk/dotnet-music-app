@@ -30,4 +30,4 @@ Please send us a zip file with the modified solution when you are done. You can 
 
 * Few extension methods were implemented to keep the code clean.
 * No unit tests are implemented.
-* Error boundry is implemented to handle exceptions commonly.
+* Error boundary is implemented to handle exceptions commonly.
