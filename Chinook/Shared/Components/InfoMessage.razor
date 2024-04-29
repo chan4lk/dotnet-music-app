@@ -1,0 +1,11 @@
+@if (!string.IsNullOrWhiteSpace(Message))
+{
+    <div class="alert alert-@(IsError ? "danger" : "info") fade show">
+        <div class="d-flex align-items-start">
+            <div class="flex-grow-1">
+                @Message
+            </div>
+            <button type="button" class="btn-close" aria-label="Close" @onclick="CloseInfoMessage"></button>
+        </div>
+    </div>
+}
